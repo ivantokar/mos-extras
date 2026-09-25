@@ -7,20 +7,24 @@ Companion Playground for the article:
 ## What this verifies
 
 - a globally isolated class can declare `isolated deinit`;
-- actor-isolated state can be accessed during an isolated deinitializer;
-- ownership and actor isolation are separate concerns;
-- the last strong reference can be released from code running outside the actor;
-- explicit lifecycle methods remain useful when cleanup timing is part of the API contract.
+- `MainActor.preconditionIsolated()` succeeds inside a MainActor-isolated deinitializer;
+- ARC still controls when the final strong reference disappears;
+- the final release can happen in detached work while isolated destruction runs under MainActor isolation;
+- explicit cleanup gives the caller a deterministic completion point;
+- asynchronous follow-up work can capture copied values instead of `self`;
+- an ordinary synchronous `deinit` is nonisolated by default and cannot freely access non-Sendable actor-isolated state in Swift 6 mode.
 
 ## Running
 
 Open `IsolatedDeinit.playground` in Xcode with a Swift 6.2+ toolchain and run the Playground.
 
-Because executor scheduling and ARC release location are runtime concerns, printed ordering is observational evidence rather than a language guarantee about threads.
+The runtime examples use `MainActor.preconditionIsolated()` to verify actor isolation directly. Printed ordering should not be treated as a general guarantee about threads or scheduling.
 
 ## Manual compiler experiments
 
-The source contains commented variants for comparing an ordinary `deinit` with `isolated deinit`. Enable them individually and inspect Swift concurrency diagnostics with strict concurrency checking enabled.
+The final sections compare a plain `deinit` with `isolated deinit` when a MainActor-isolated class owns non-Sendable state.
+
+Enable those examples individually with Swift 6 language mode and strict concurrency checking to inspect the diagnostics.
 
 ## Article
 
