@@ -8,10 +8,10 @@ Companion Playground for the article:
 
 - `Span` provides a non-owning view over contiguous storage;
 - an Array can expose a `Span` without manually handling an unsafe pointer;
-- functions can consume a `Span` directly and iterate its elements;
-- the source collection remains the owner of the storage;
-- `Span` is useful for borrowed access, not ownership transfer;
-- unsafe pointer APIs still remain available when explicit pointer interoperability is required.
+- functions can consume a `Span` directly and access its elements by index;
+- a `Span` is lifetime-dependent and is not an ordinary owning collection value;
+- owned data can be copied explicitly when independent ownership is required;
+- unsafe pointer APIs remain available when explicit pointer interoperability is required.
 
 ## Running
 
@@ -19,7 +19,7 @@ Open `SpanLifetime.playground` in Xcode with a Swift 6.2+ toolchain and run the 
 
 ## Manual compiler experiments
 
-The source contains commented lifetime experiments. Uncomment them individually to inspect the compiler diagnostics produced when a borrowed `Span` is made to escape its valid lifetime.
+The source contains commented lifetime experiments. Uncomment them individually to inspect diagnostics for storing or returning a lifetime-dependent `Span` where its dependency cannot be preserved.
 
 ## Article
 
