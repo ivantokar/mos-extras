@@ -1,12 +1,17 @@
 import Foundation
 
+// Molecules of Swift #3 — Isolated Deinitialization
+//
+// Requires Swift 6.2+.
+//
+// Runtime sections compile as-is. Compiler experiments are kept commented
+// because their purpose is to trigger Swift concurrency diagnostics.
+
 func separator(_ title: String) {
     print("\n--- \(title) ---")
 }
 
-// Requires a Swift 6.2+ toolchain.
-
-// MARK: - 1. MainActor-isolated object with isolated deinit
+// MARK: - 1. isolated deinit inherits the containing actor isolation
 
 separator("1. isolated deinit")
 
@@ -24,69 +29,101 @@ final class Observation {
     }
 
     isolated deinit {
-        // The deinitializer inherits the class isolation, so isolated state
-        // can be accessed as part of destruction.
+        // This checks actor isolation directly rather than inferring it from a
+        // thread name. It traps if this code is not isolated to MainActor.
+        MainActor.preconditionIsolated()
         print("Observation destroyed; events:", events)
     }
 }
 
-// MARK: - 2. Lifetime is still controlled by ownership
-
-separator("2. Ownership controls lifetime")
-
 @MainActor
-func makeAndReleaseObservation() {
+func useObservation() {
     var observation: Observation? = Observation()
     observation?.record("used")
-    print("Dropping the last local strong reference")
+    print("Dropping the local strong reference")
     observation = nil
 }
 
-await makeAndReleaseObservation()
+await MainActor.run {
+    useObservation()
+}
 
-// @MainActor controls isolated access. ARC still determines when the
-// object's final strong reference disappears.
+// MARK: - 2. ARC still decides when the last strong reference disappears
 
-// MARK: - 3. The release site need not be the isolation domain
-
-separator("3. Transfer ownership")
+separator("2. Ownership still controls lifetime")
 
 @MainActor
-final class Session: @unchecked Sendable {
+final class OwnedSession {
+    let name: String
+
+    init(name: String) {
+        self.name = name
+        print("Created:", name)
+    }
+
+    isolated deinit {
+        MainActor.preconditionIsolated()
+        print("Destroyed:", name)
+    }
+}
+
+await MainActor.run {
+    var first: OwnedSession? = OwnedSession(name: "shared")
+    var second = first
+
+    print("Dropping first reference")
+    first = nil
+
+    print("Second reference still exists:", second != nil)
+    print("Dropping second reference")
+    second = nil
+}
+
+// @MainActor constrains isolated access. ARC still decides when there are no
+// strong references left and destruction becomes necessary.
+
+// MARK: - 3. The final release can happen outside the isolation domain
+
+separator("3. Final release outside MainActor")
+
+@MainActor
+final class DetachedSession: @unchecked Sendable {
     private let name: String
 
     init(name: String) {
         self.name = name
-        print("Session created:", name)
+        print("Created on MainActor:", name)
     }
 
     isolated deinit {
-        print("Session destroyed:", name)
+        // Even when the final strong reference disappears in detached work,
+        // isolated destruction must execute under MainActor isolation.
+        MainActor.preconditionIsolated()
+        print("isolated deinit on MainActor:", name)
     }
 }
 
-let session = await MainActor.run {
-    Session(name: "demo")
+let detached = Task.detached {
+    // Creation happens on MainActor, then ownership is returned to detached
+    // work. @unchecked Sendable is used only to make this experiment possible;
+    // it is NOT a recommendation for normal actor-isolated classes.
+    let session = await MainActor.run {
+        DetachedSession(name: "detached-owner")
+    }
+
+    print("Detached task now holds the only strong reference")
+    _ = session
+
+    // session is released when this detached task scope ends.
 }
 
-// The example deliberately uses @unchecked Sendable only to make the
-// ownership experiment possible from non-MainActor code. That annotation
-// is not a recommendation for production design.
+await detached.value
 
-let task = Task.detached {
-    var owned: Session? = session
-    print("Detached task owns Session")
-    owned = nil
-    print("Detached task released its local reference")
-}
+// This separates two questions:
+//   ARC / ownership -> when the final reference disappears
+//   actor isolation -> where isolated destruction is allowed to execute
 
-await task.value
-
-// The key distinction is conceptual:
-// ownership determines when the object becomes eligible for destruction;
-// isolation constrains where isolated destruction is allowed to execute.
-
-// MARK: - 4. Explicit cleanup when timing matters
+// MARK: - 4. Explicit cleanup is clearer when timing is part of the contract
 
 separator("4. Explicit lifecycle")
 
@@ -95,12 +132,17 @@ final class ExplicitResource {
     private(set) var isClosed = false
 
     func close() {
-        guard !isClosed else { return }
+        guard !isClosed else {
+            return
+        }
+
         isClosed = true
         print("Resource closed explicitly")
     }
 
     isolated deinit {
+        MainActor.preconditionIsolated()
+
         if !isClosed {
             print("Fallback cleanup during deinit")
         }
@@ -110,28 +152,79 @@ final class ExplicitResource {
 await MainActor.run {
     let resource = ExplicitResource()
     resource.close()
+    print("Caller knows cleanup completed before this line")
 }
 
-// When callers must know exactly when a resource is released, an explicit
-// close()/withResource-style API communicates that contract better than
-// relying on deinitialization timing.
+// isolated deinit is useful for cleanup tied to object lifetime. An explicit
+// API is a better fit when callers must know exactly when cleanup completed.
 
-// MARK: - 5. Manual compiler experiment
+// MARK: - 5. Async follow-up should capture values, not self
 
-separator("5. Compare ordinary deinit")
+separator("5. Copy values for async follow-up")
 
-// Duplicate Observation under a different name and replace:
+actor DeinitLog {
+    static let shared = DeinitLog()
+
+    func write(_ message: String) {
+        print("log:", message)
+    }
+}
+
+@MainActor
+final class ClickCounter {
+    private var count = 3
+
+    isolated deinit {
+        let finalCount = count
+
+        // The task captures copied data. It does not capture self and does not
+        // try to extend the lifetime of an object that is deinitializing.
+        Task {
+            await DeinitLog.shared.write("final count = \(finalCount)")
+        }
+    }
+}
+
+await MainActor.run {
+    _ = ClickCounter()
+}
+
+// Give the unstructured task above a chance to execute in this script.
+try? await Task.sleep(for: .milliseconds(50))
+
+// MARK: - 6. Manual compiler experiment: ordinary deinit is nonisolated
+
+// Compile in Swift 6 language mode with strict concurrency checking. Token is
+// intentionally non-Sendable. Accessing it from the plain deinit should produce
+// a diagnostic because a synchronous deinitializer is nonisolated by default.
 //
-//     isolated deinit
+// final class Token {
+//     func stop() {}
+// }
 //
-// with:
+// @MainActor
+// final class OrdinaryDeinit {
+//     let token = Token()
 //
-//     deinit
+//     deinit {
+//         token.stop() // expected compiler error in Swift 6 mode
+//     }
+// }
+
+// MARK: - 7. Manual comparison: make the deinitializer isolated
+
+// Change the example above to:
 //
-// Then access MainActor-isolated mutable state from the deinitializer.
-// With strict concurrency checking, inspect the diagnostics produced by
-// your Swift toolchain. Keep the variant commented so this Playground
-// remains runnable.
+// @MainActor
+// final class IsolatedDeinitVersion {
+//     let token = Token()
+//
+//     isolated deinit {
+//         token.stop()
+//     }
+// }
+//
+// The access is now performed under the class isolation.
 
 separator("Done")
 print("All runtime experiments completed.")
