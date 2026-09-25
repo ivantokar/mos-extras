@@ -1,6 +1,6 @@
 import Foundation
 
-// Molecules of Swift #3 — Isolated Deinitialization
+// Molecules of Swift #3 — isolated deinit
 //
 // Requires Swift 6.2+.
 //
