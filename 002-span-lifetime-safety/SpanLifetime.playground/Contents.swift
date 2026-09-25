@@ -1,26 +1,38 @@
 import Foundation
 
+// Molecules of Swift #2 — Span Lifetime Safety
+//
+// Requires Swift 6.2+.
+//
+// Runtime sections compile as-is. Compiler experiments are kept commented
+// because their purpose is to trigger diagnostics.
+
 func separator(_ title: String) {
     print("\n--- \(title) ---")
 }
 
-// Requires a Swift 6.2+ toolchain.
-
-// MARK: - 1. Reading contiguous storage through Span
+// MARK: - 1. Array can vend a Span without exposing an unsafe pointer
 
 separator("1. Array.span")
 
-let bytes: [UInt8] = [10, 20, 30, 40]
+func showBasicSpanAccess() {
+    let bytes: [UInt8] = [10, 20, 30, 40]
+    let span = bytes.span
 
-// Use the borrowed value directly. A nonescapable Span cannot simply be
-// stored wherever an ordinary collection value can.
-print("count:", bytes.span.count)
+    print("count:", span.count)
 
-for index in 0..<bytes.span.count {
-    print(bytes.span[index])
+    for index in 0..<span.count {
+        print("byte[\(index)]:", span[index])
+    }
 }
 
-// MARK: - 2. A function can consume Span directly
+showBasicSpanAccess()
+
+// Array still owns the storage. Span is a borrowed view of those elements.
+// The important part is the lifetime relationship to the binding that vended
+// the Span, not a transfer of ownership.
+
+// MARK: - 2. Functions can accept Span directly
 
 separator("2. Span parameter")
 
@@ -34,29 +46,90 @@ func checksum(_ bytes: Span<UInt8>) -> UInt64 {
     return result
 }
 
-print("checksum:", checksum(bytes.span))
+func showSpanParameter() {
+    let bytes: [UInt8] = [10, 20, 30, 40]
+    print("checksum:", checksum(bytes.span))
+}
 
-// MARK: - 3. Compare with an unsafe-buffer scope
+showSpanParameter()
 
-separator("3. Unsafe buffer scope")
+// The function does not need UnsafeBufferPointer just to read contiguous
+// elements, and it does not take ownership of the Array's storage.
 
-let pointerChecksum = bytes.withUnsafeBufferPointer { buffer -> UInt64 in
+// MARK: - 3. Compare with a closure-scoped unsafe buffer
+
+separator("3. Span vs withUnsafeBufferPointer")
+
+func unsafeChecksum(_ bytes: UnsafeBufferPointer<UInt8>) -> UInt64 {
     var result: UInt64 = 0
-    for byte in buffer {
+
+    for byte in bytes {
         result &+= UInt64(byte)
     }
+
     return result
 }
 
-print("pointer checksum:", pointerChecksum)
-print("span checksum:", checksum(bytes.span))
+func compareAccessModels() {
+    let bytes: [UInt8] = [10, 20, 30, 40]
 
-// The unsafe-buffer API expresses pointer validity with a closure scope.
-// Span expresses borrowed access through a lifetime-dependent value.
+    let pointerValue = bytes.withUnsafeBufferPointer { buffer in
+        unsafeChecksum(buffer)
+    }
 
-// MARK: - 4. Copy values when ownership is needed
+    let spanValue = checksum(bytes.span)
 
-separator("4. Owned copy")
+    print("unsafe buffer checksum:", pointerValue)
+    print("Span checksum:", spanValue)
+}
+
+compareAccessModels()
+
+// withUnsafeBufferPointer expresses validity through a closure boundary.
+// Array.span returns a lifetime-dependent value instead. The compiler tracks
+// the borrowing relationship to the source binding.
+
+// MARK: - 4. A Span can live in a local scope while the source is borrowed
+
+separator("4. Local borrow")
+
+func showLocalBorrow() {
+    let bytes: [UInt8] = [1, 2, 3]
+    let span = bytes.span
+
+    print("first:", span[0])
+    print("last:", span[span.count - 1])
+}
+
+showLocalBorrow()
+
+// Span is Copyable but ~Escapable. Local copies are fine while their lifetime
+// dependency remains valid.
+
+// MARK: - 5. Ending the borrow allows later mutation
+
+separator("5. Borrow scope and mutation")
+
+func showBorrowEndingBeforeMutation() {
+    var bytes: [UInt8] = [1, 2, 3]
+
+    do {
+        let span = bytes.span
+        print("before mutation:", span[0])
+    } // the borrow of bytes ends here
+
+    bytes.append(4)
+    print("after borrow ended:", bytes)
+}
+
+showBorrowEndingBeforeMutation()
+
+// The do block is not Span-specific syntax. It simply makes the end of the
+// local borrow obvious before the Array is mutated.
+
+// MARK: - 6. Copy explicitly when independent ownership is required
+
+separator("6. Owned copy")
 
 func ownedCopy(_ bytes: Span<UInt8>) -> [UInt8] {
     var result: [UInt8] = []
@@ -69,12 +142,20 @@ func ownedCopy(_ bytes: Span<UInt8>) -> [UInt8] {
     return result
 }
 
-let copy = ownedCopy(bytes.span)
-print("owned copy:", copy)
+func showOwnedCopy() {
+    let bytes: [UInt8] = [7, 8, 9]
+    let copy = ownedCopy(bytes.span)
+    print("owned copy:", copy)
+}
 
-// MARK: - 5. Reusable algorithms can stay pointer-free
+showOwnedCopy()
 
-separator("5. Reusable borrowed algorithm")
+// The returned Array owns its elements independently. This is the explicit
+// point where the code stops borrowing and chooses to copy.
+
+// MARK: - 7. Reusable algorithms can stay pointer-free
+
+separator("7. Borrowed algorithms")
 
 func containsZero(_ bytes: Span<UInt8>) -> Bool {
     for index in 0..<bytes.count {
@@ -82,48 +163,66 @@ func containsZero(_ bytes: Span<UInt8>) -> Bool {
             return true
         }
     }
+
     return false
 }
 
 let noZero: [UInt8] = [1, 2, 3]
 let hasZero: [UInt8] = [1, 0, 3]
 
-print(containsZero(noZero.span))
-print(containsZero(hasZero.span))
+print("contains zero:", containsZero(noZero.span))
+print("contains zero:", containsZero(hasZero.span))
 
-// MARK: - 6. Manual lifetime experiments
+// MARK: - 8. Unsafe pointer interoperability still exists
 
-separator("6. Lifetime experiments")
+separator("8. Explicit pointer interoperability")
 
-// Experiment A: storing a lifetime-dependent Span can itself be rejected
-// when the compiler cannot prove that the dependency is preserved.
-//
-// Try:
-//
-//     let escapedView = bytes.span
-//     print(escapedView.count)
-//
-// In a Swift 6.2.1 script this produces a lifetime-dependent escape
-// diagnostic. Compare that with passing bytes.span directly to checksum(_:).
-
-// Experiment B: try returning a Span derived from local storage:
-//
-//     func invalidEscape() -> Span<UInt8> {
-//         let local: [UInt8] = [1, 2, 3]
-//         return local.span
-//     }
-//
-// The compiler should reject the attempt to return a borrowed view whose
-// dependency cannot outlive the function.
-
-// MARK: - 7. Unsafe pointers still have a role
-
-separator("7. Explicit pointer interoperability")
-
-bytes.withUnsafeBufferPointer { buffer in
+let pointerBytes: [UInt8] = [11, 12, 13]
+pointerBytes.withUnsafeBufferPointer { buffer in
     print("baseAddress:", buffer.baseAddress as Any)
     print("count:", buffer.count)
 }
+
+// Span is not a replacement for every pointer API. C interoperability,
+// manually managed memory, and APIs that fundamentally require addresses can
+// still need UnsafePointer-family types.
+
+// MARK: - 9. Manual compiler experiment: mutation while borrowed
+
+// Uncomment this function. Swift 6.2 should report an overlapping-access error
+// because span still borrows bytes when bytes.append(4) asks for exclusive
+// mutable access.
+//
+// func mutationWhileBorrowed() {
+//     var bytes: [UInt8] = [1, 2, 3]
+//     let span = bytes.span
+//     print(span[0])
+//
+//     bytes.append(4) // expected: overlapping access diagnostic
+//
+//     print(span[0])
+// }
+
+// MARK: - 10. Manual compiler experiment: returning a Span
+
+// Span is ~Escapable. An ordinary function cannot simply return a Span without
+// expressing an appropriate lifetime relationship for the result. Uncomment
+// this function and inspect the compiler diagnostic.
+//
+// func invalidEscape() -> Span<UInt8> {
+//     let local: [UInt8] = [1, 2, 3]
+//     return local.span
+// }
+
+// MARK: - 11. Manual compiler experiment: top-level storage
+
+// In script/Playground contexts, the compiler may reject a top-level binding
+// like this because the lifetime-dependent value escapes the scoped access used
+// to vend it.
+//
+// let topLevelBytes: [UInt8] = [1, 2, 3]
+// let topLevelSpan = topLevelBytes.span
+// print(topLevelSpan[0])
 
 separator("Done")
 print("All runtime experiments completed.")
