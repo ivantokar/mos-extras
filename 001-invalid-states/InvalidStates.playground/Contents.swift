@@ -1,6 +1,6 @@
 import Foundation
 
-// Molecules of Swift #1 — Invalid States
+// Molecules of Swift #1 — Associated Values
 //
 // This Playground is intentionally broader than the article. Each section
 // isolates one claim so you can change the code and see which guarantees come
@@ -410,6 +410,57 @@ renderOnlySuccess(.cancelled)
 
 // Because default already handles every other case, adding more cases to the
 // enum does not force this switch to change.
+
+// MARK: - 15. Different cases can carry different payload shapes
+
+separator("15. Different payload shapes")
+
+enum SearchTarget {
+    case all
+    case author(id: UUID)
+    case tag(String)
+    case dateRange(from: Date, to: Date)
+}
+
+let targets: [SearchTarget] = [
+    .all,
+    .author(id: UUID()),
+    .tag("swift"),
+    .dateRange(from: .distantPast, to: .distantFuture)
+]
+
+for target in targets {
+    switch target {
+    case .all:
+        print("all")
+    case let .author(id):
+        print("author:", id)
+    case let .tag(tag):
+        print("tag:", tag)
+    case let .dateRange(from, to):
+        print("date range:", from, to)
+    }
+}
+
+// Each case can define a different payload shape. Matching the case narrows
+// the value to that shape and exposes only the data that belongs there.
+
+// MARK: - 16. Optional uses the same associated-value idea
+
+separator("16. Optional as an enum-shaped model")
+
+let maybeName: String? = "Ivan"
+
+switch maybeName {
+case .none:
+    print("No name")
+case let .some(name):
+    print("Name:", name)
+}
+
+// Optional is represented by two alternatives: no value, or a wrapped value.
+// The wrapped data exists only in the .some case, which is the same modeling
+// idea used by custom enums with associated values.
 
 separator("Done")
 print("All runtime experiments completed.")
