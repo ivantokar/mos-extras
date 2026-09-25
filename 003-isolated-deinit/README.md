@@ -1,8 +1,8 @@
-# Molecules of Swift #3 — Isolated Deinitialization
+# Molecules of Swift #3 — isolated deinit
 
 Companion Playground for the article:
 
-**@MainActor Doesn’t Own Your Lifetime**
+**isolated deinit: @MainActor Doesn’t Own Your Lifetime**
 
 ## What this verifies
 
