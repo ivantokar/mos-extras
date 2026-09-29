@@ -1,12 +1,12 @@
-# Molecules of Swift — Companion Playgrounds
+# Molecules of Swift: Playground
 
-This repository contains the executable companion material for **Molecules of Swift**, a series by Ivan Tokar about small Swift features, patterns, and techniques that make code more expressive, precise, and idiomatic.
+**Molecules of Swift: Playground** is the executable companion to **Molecules of Swift**, a series by Ivan Tokar about small Swift features, patterns, and techniques that make code more expressive, precise, and idiomatic.
 
 The articles are published on [ivantokar.com](https://ivantokar.com).
 
 ## What is here?
 
-Each numbered directory corresponds to one Molecules of Swift article.
+Each numbered directory corresponds to one **Molecules of Swift** article and contains its Playground.
 
 For example:
 
@@ -17,7 +17,7 @@ For example:
 └── README.md
 ```
 
-The Playground is not just a copy of the code from the article. It is a small lab where you can run the examples, change them, explore variations, and try compiler experiments that would be awkward to fit into the article itself.
+Each Playground is not just a copy of the code from the article. It is a small lab where you can run the examples, change them, explore variations, and try compiler experiments that would be awkward to fit into the article itself.
 
 The README inside each directory explains what that particular Playground demonstrates.
 
