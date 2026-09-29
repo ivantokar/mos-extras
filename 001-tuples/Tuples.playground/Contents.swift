@@ -67,9 +67,9 @@ case (_, 0): print("x-axis")
 default: print("elsewhere")
 }
 
-// MARK: - 7. Equality syntax exists, but tuples are not generally Equatable-conforming values
+// MARK: - 7. Direct equality does not imply Equatable or Hashable conformance
 
-// Direct tuple equality is supported for compatible tuples. Do not infer from this that (Int, Int) can satisfy a generic T: Equatable constraint.
+// Direct tuple equality is supported for compatible tuples. In Swift 6.4, that still does not make (Int, Int) conform to Equatable or Hashable.
 print((1, 2) == (1, 2))
 
 // Manual compiler experiment:
