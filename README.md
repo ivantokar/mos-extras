@@ -1,8 +1,8 @@
 # Molecules of Swift: Playground
 
-**Molecules of Swift: Playground** is the executable companion to **Molecules of Swift**, a series by Ivan Tokar about small Swift features, patterns, and techniques that make code more expressive, precise, and idiomatic.
+**Molecules of Swift: Playground** is the executable companion to **Molecules of Swift**, where I explore small Swift features, patterns, and techniques that make code more expressive, precise, and idiomatic.
 
-The series is published at [Molecules of Swift](https://ivantokar.com/tags/molecules-of-swift).
+Read the full **[Molecules of Swift](https://ivantokar.com/tags/molecules-of-swift)** series on my website.
 
 ## What is here?
 
