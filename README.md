@@ -2,7 +2,7 @@
 
 **Molecules of Swift: Playground** is the executable companion to **Molecules of Swift**, a series by Ivan Tokar about small Swift features, patterns, and techniques that make code more expressive, precise, and idiomatic.
 
-The articles are published on [ivantokar.com](https://ivantokar.com).
+The series is published at [Molecules of Swift](https://ivantokar.com/tags/molecules-of-swift).
 
 ## What is here?
 
@@ -32,7 +32,7 @@ Some Playgrounds also contain intentionally invalid examples. These are commente
 
 ## Articles
 
-Read **Molecules of Swift** and the rest of my writing at [ivantokar.com](https://ivantokar.com).
+Read the complete [Molecules of Swift](https://ivantokar.com/tags/molecules-of-swift) series on ivantokar.com.
 
 The numbering in this repository follows the publication order of the series, so article `#001` maps to directory `001-...`, article `#002` to `002-...`, and so on.
 
