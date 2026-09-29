@@ -1,3 +1,14 @@
+// -----------------------------------------------------------------------------
+// MOLECULES OF SWIFT · #001
+// Tuples: Group Values Without Creating a Type
+//
+// Ivan Tokar · https://ivantokar.com
+// Article: https://ivantokar.com/posts/tuples-group-values-without-creating-a-type
+// Playground: https://github.com/ivantokar/mos-playground
+// -----------------------------------------------------------------------------
+//
+// Explore. Change things. Break things. Learn why.
+
 import Foundation
 
 // MARK: - 1. Group values without declaring a new nominal type
