@@ -10,7 +10,7 @@ Companion Playground for the article **Tuples: Group Values Without Creating a T
 - Destructuring can ignore unwanted elements with `_`.
 - `(T, U)?` and `(T?, U?)` model different states.
 - Tuple patterns compose with `switch`.
-- Direct tuple equality and generic protocol conformance are different capabilities.
+- Direct tuple equality does not imply `Equatable` or `Hashable` conformance.
 - A named struct is the stronger boundary once grouped data needs identity, behavior, invariants, or conformances.
 
 ## Running
@@ -21,7 +21,7 @@ The active examples compile and print their results directly.
 
 ## Manual compiler experiment
 
-In section 7, uncomment the generic function and the tuple call. With Swift 6.2.1, the compiler rejects the tuple at the generic protocol constraint.
+In section 7, uncomment the generic `Equatable` experiment or the tuple-key dictionary. With Swift 6.4, the compiler rejects the tuple because tuple types still do not automatically conform to `Equatable` or `Hashable`.
 
 ## Article
 
