@@ -25,4 +25,4 @@ In section 7, uncomment the generic function and the tuple call. With Swift 6.2.
 
 ## Article
 
-Article path: `/blog/tuples-group-values-without-creating-a-type/`
+Read the article: [Tuples: Group Values Without Creating a Type](https://ivantokar.com/posts/tuples-group-values-without-creating-a-type)
