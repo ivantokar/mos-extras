@@ -23,7 +23,7 @@ swift run molecule-001
 
 Or open the package in Xcode and run the `molecule-001` executable.
 
-The intentionally non-compiling `Equatable` and `Hashable` experiments are commented out in `Sources/Molecule001Tuples/main.swift`.
+The intentionally non-compiling `Equatable` and `Hashable` experiments are commented out in `main.swift`.
 
 ## Article
 

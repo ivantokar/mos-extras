@@ -22,7 +22,7 @@ swift run molecule-002
 
 Or open the package in Xcode and run the `molecule-002` executable.
 
-The intentionally invalid shape-mismatch experiment is commented out in `Sources/Molecule002TuplePatterns/main.swift`.
+The intentionally invalid shape-mismatch experiment is commented out in `main.swift`.
 
 ## Article
 

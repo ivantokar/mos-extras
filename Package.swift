@@ -11,11 +11,13 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "Molecule001Tuples",
-            path: "Sources/Molecule001Tuples"
+            path: "Molecules/001-tuples",
+            exclude: ["README.md"]
         ),
         .executableTarget(
             name: "Molecule002TuplePatterns",
-            path: "Sources/Molecule002TuplePatterns"
+            path: "Molecules/002-tuple-patterns",
+            exclude: ["README.md"]
         ),
     ]
 )
