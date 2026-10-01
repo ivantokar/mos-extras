@@ -8,11 +8,9 @@ on:
 jobs:
   swift:
     runs-on: ubuntu-latest
+    container: swift:6.4
     steps:
       - uses: actions/checkout@v4
-      - uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: "6.4"
       - name: Show Swift version
         run: swift --version
       - name: Build all Molecules
