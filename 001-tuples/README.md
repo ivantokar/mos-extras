@@ -1,28 +1,30 @@
 # Molecules of Swift #001 — Tuples: Group Values Without Creating a Type
 
-Companion Playground for the article **Tuples: Group Values Without Creating a Type**.
+Executable companion for **Tuples: Group Values Without Creating a Type**.
 
 ## What this verifies
 
-- Tuples group heterogeneous values into one compound value.
-- Tuple elements can be labeled and accessed by label.
-- Functions can return optional labeled tuples.
-- Destructuring can ignore unwanted elements with `_`.
-- `(T, U)?` and `(T?, U?)` model different states.
-- Tuple patterns compose with `switch`.
-- Direct tuple equality does not imply `Equatable` or `Hashable` conformance.
-- A named struct is the stronger boundary once grouped data needs identity, behavior, invariants, or conformances.
+- tuples group related values without declaring a nominal type;
+- tuple labels and explicit tuple types;
+- multiple return values;
+- destructuring and ignored positions;
+- optional tuples versus tuples of optionals;
+- tuple pattern matching;
+- direct tuple equality is distinct from `Equatable` / `Hashable` conformance;
+- a named type provides a home for conformances and behavior.
 
 ## Running
 
-Open `Tuples.playground` in Xcode and run the Playground.
+From the repository root:
 
-The active examples compile and print their results directly.
+```bash
+swift run molecule-001
+```
 
-## Manual compiler experiment
+Or open the package in Xcode and run the `molecule-001` executable.
 
-In section 7, uncomment the generic `Equatable` experiment or the tuple-key dictionary. With Swift 6.4, the compiler rejects the tuple because tuple types still do not automatically conform to `Equatable` or `Hashable`.
+The intentionally non-compiling `Equatable` and `Hashable` experiments are commented out in `Sources/Molecule001Tuples/main.swift`.
 
 ## Article
 
-Read the article: [Tuples: Group Values Without Creating a Type](https://ivantokar.com/posts/tuples-group-values-without-creating-a-type)
+[Tuples: Group Values Without Creating a Type](https://ivantokar.com/posts/tuples-group-values-without-creating-a-type)
