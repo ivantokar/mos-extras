@@ -1,40 +1,50 @@
 # Molecules of Swift: Playground
 
-**Molecules of Swift: Playground** is the executable companion to **Molecules of Swift**, where I explore small Swift features, patterns, and techniques that make code more expressive, precise, and idiomatic.
+**Molecules of Swift: Playground** is the executable companion to **[Molecules of Swift](https://ivantokar.com/tags/molecules-of-swift)**, where I explore small Swift features, patterns, and techniques that make code more expressive, precise, and idiomatic.
 
-Read the full **[Molecules of Swift](https://ivantokar.com/tags/molecules-of-swift)** series on my website.
+Despite the name, this repository is a **Swift Package**, not a collection of legacy `.playground` documents. Each Molecule is an executable target that can be built and run in Xcode or from the command line.
 
-## What is here?
-
-Each numbered directory corresponds to one **Molecules of Swift** article and contains its Playground.
-
-For example:
+## Structure
 
 ```text
+Package.swift
+Sources/
+├── Molecule001Tuples/
+│   └── main.swift
+└── Molecule002TuplePatterns/
+    └── main.swift
+
 001-tuples/
-├── Tuples.playground/
-│   └── Contents.swift
+└── README.md
+002-tuple-patterns/
 └── README.md
 ```
 
-Each Playground is not just a copy of the code from the article. It is a small lab where you can run the examples, change them, explore variations, and try compiler experiments that would be awkward to fit into the article itself.
+The numbered README directories keep article-specific orientation and manual compiler experiments. The executable source lives under `Sources/`.
 
-The README inside each directory explains what that particular Playground demonstrates.
+## Run it
 
-## How to use it
+Open the repository root in Xcode. Xcode recognizes `Package.swift` as a Swift package; select the executable scheme for the Molecule you want to explore and run it.
 
-1. Open the directory for the Molecule you are reading.
-2. Open the `.playground` file in Xcode.
-3. Run it and inspect the output.
-4. Change the examples and experiment.
+Or use SwiftPM directly:
 
-Some Playgrounds also contain intentionally invalid examples. These are commented out and clearly marked as manual compiler experiments. Uncomment them when you want to inspect the compiler diagnostic.
+```bash
+swift build
+swift run molecule-001
+swift run molecule-002
+```
+
+Every executable must build and run successfully as committed. Examples that intentionally fail compilation stay commented out and include instructions for reproducing the compiler diagnostic manually.
+
+## Verification
+
+The package is designed to be executable evidence for the claims made in the articles. A Molecule is not complete merely because its source looks plausible: its active examples must pass the repository's build/run verification.
 
 ## Articles
 
-Read the complete [Molecules of Swift](https://ivantokar.com/tags/molecules-of-swift) series on ivantokar.com.
+Read the complete **[Molecules of Swift](https://ivantokar.com/tags/molecules-of-swift)** series on ivantokar.com.
 
-The numbering in this repository follows the publication order of the series, so article `#001` maps to directory `001-...`, article `#002` to `002-...`, and so on.
+The numbering follows publication order: article `#001` maps to `molecule-001`, article `#002` to `molecule-002`, and so on.
 
 ## License
 
