@@ -11,11 +11,42 @@ jobs:
     container: swift:6.4
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Show Swift version
         run: swift --version
+
       - name: Build all Molecules
         run: swift build
-      - name: Run Molecule 001
-        run: swift run molecule-001
-      - name: Run Molecule 002
-        run: swift run molecule-002
+
+      - name: Run changed Molecules
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+          fi
+
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            BASE="$(git rev-list --max-parents=0 HEAD)"
+          fi
+
+          changed_dirs="$(
+            git diff --name-only "$BASE" HEAD -- 'Molecules/*/**' |
+            awk -F/ 'NF >= 3 { print $1 "/" $2 }' |
+            sort -u
+          )"
+
+          if [ -z "$changed_dirs" ]; then
+            echo "No Molecule directories changed."
+            exit 0
+          fi
+
+          for dir in $changed_dirs; do
+            number="$(basename "$dir" | cut -d- -f1)"
+            product="molecule-$number"
+            echo "Running $product for changes in $dir"
+            swift run "$product"
+          done
