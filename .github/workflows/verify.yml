@@ -27,6 +27,8 @@ jobs:
       - name: Run changed Molecules
         shell: bash
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             base_ref="${{ github.event.pull_request.base.ref }}"
             git fetch --no-tags origin "$base_ref"
