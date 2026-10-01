@@ -28,7 +28,9 @@ jobs:
         shell: bash
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE="${{ github.event.pull_request.base.sha }}"
+            base_ref="${{ github.event.pull_request.base.ref }}"
+            git fetch --no-tags origin "$base_ref"
+            BASE="origin/$base_ref"
           else
             BASE="${{ github.event.before }}"
           fi
